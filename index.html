@@ -8,6 +8,24 @@
 <button data-days="1">+1</button><button data-days="7">+7</button><button data-days="30">+30</button>
 <label class="sub" for="jump">Days</label><input id="jump" type="number" value="14" min="-3650" max="3650"><button id="jumpBtn">Go</button>
 </section>
+<section class="location-controls" aria-label="Location controls">
+<label for="locationSelect">Location</label>
+<select id="locationSelect">
+<option value="longmont">Longmont, Colorado</option>
+<option value="rmnp">Rocky Mountain National Park</option>
+<option value="custom">Custom location…</option>
+</select>
+<button id="useLocation" type="button">Use my location</button>
+<div id="customLocation" class="custom-location hidden">
+<input id="locationName" type="text" placeholder="Location name" aria-label="Location name">
+<input id="latitude" type="number" step="any" min="-90" max="90" placeholder="Latitude" aria-label="Latitude">
+<input id="longitude" type="number" step="any" min="-180" max="180" placeholder="Longitude" aria-label="Longitude">
+<input id="elevation" type="number" step="1" placeholder="Elevation m" aria-label="Elevation in metres">
+<input id="timezone" type="text" placeholder="America/Denver" aria-label="IANA time zone">
+<button id="applyLocation" type="button">Apply</button>
+</div>
+<div id="locationStatus" class="sub"></div>
+</section>
 <div class="layout"><section class="clock-wrap"><svg id="clock" class="clock" viewBox="0 0 700 700" role="img" aria-label="Noon-to-noon astronomical clock"></svg></section>
 <aside><div class="panel"><h2>Solar events</h2><div id="events" class="events"></div>
 <div class="moon-card"><h2>Moon</h2><div style="display:flex;gap:14px;align-items:center"><div id="moonSymbol" class="moon-symbol">◐</div><div><div id="moonIllum"></div><div id="moonPhase" class="sub"></div></div></div></div>
