@@ -24,7 +24,9 @@ function render(){
  const today=localDateString(new Date(),locationData.timeZone);drawClock(document.querySelector("#clock"),samples,selected,selected===today,formatTime);
  const ev=document.querySelector("#events");ev.innerHTML="";for(const r of eventRows(start)){const a=document.createElement("div"),b=document.createElement("div");a.className="label";a.textContent=r.label;b.textContent=formatTime(r.date);ev.append(a,b)}
  document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);
- document.querySelector("#error").textContent="";const u=new URL(location.href);u.searchParams.set("date",selected);history.replaceState(null,"",u);
+ const firstEvent=eventRows(start)[0];
+ document.querySelector("#error").textContent=`DEBUG — noon anchor: ${formatTime(start)} / ${start.toISOString()} · Sun altitude at anchor: ${samples[0].sunAlt.toFixed(1)}° · first event UTC: ${firstEvent?firstEvent.date.toISOString():"none"}`;
+ const u=new URL(location.href);u.searchParams.set("date",selected);history.replaceState(null,"",u);
  }catch(e){document.querySelector("#error").textContent="Unable to calculate this date: "+e.message;console.error(e)}
 }
 document.querySelectorAll("[data-days]").forEach(b=>b.addEventListener("click",()=>addDays(Number(b.dataset.days))));
