@@ -47,7 +47,9 @@ function render(){
   ["Sunset",fmt(at("Sun center at horizon"))],
   ["Golden Hour",range(at("Golden hour (+6°)"),at("Golden / blue boundary"))],
   ["Blue Hour",range(at("Golden / blue boundary"),at("Blue-hour boundary"))],
-  ["Civil Twilight",range(at("Sun center at horizon"),at("Civil twilight"))]
+  ["Civil Twilight",range(at("Sun center at horizon"),at("Civil twilight"))],
+  ["Nautical Twilight",range(at("Civil twilight"),at("Nautical twilight"))],
+  ["Astronomical Twilight",range(at("Nautical twilight"),at("Astronomical twilight"))]
  ];for(const [label,value] of solarRows){const a=document.createElement("div"),b=document.createElement("div");a.className="label";a.textContent=label;b.textContent=value;ev.append(a,b)}
  document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);
  document.querySelector("#error").textContent="";
