@@ -35,6 +35,31 @@ export function moonInfo(date) {
   };
 }
 
+export const DISPLAY_OBJECTS = [
+  { key: "jupiter", name: "Jupiter", body: Astronomy.Body.Jupiter },
+  { key: "saturn", name: "Saturn", body: Astronomy.Body.Saturn },
+  { key: "venus", name: "Venus", body: Astronomy.Body.Venus },
+  { key: "mars", name: "Mars", body: Astronomy.Body.Mars },
+  { key: "m42", name: "Orion Nebula (M42)", ra: 5.5881, dec: -5.3911 },
+  { key: "m45", name: "Pleiades (M45)", ra: 3.7903, dec: 24.1167 },
+  { key: "m31", name: "Andromeda Galaxy (M31)", ra: 0.7123, dec: 41.2692 }
+];
+
+function fixedAltitude(ra, dec, date, observer) {
+  return Astronomy.Horizon(date, observer, ra, dec, "normal").altitude;
+}
+
+export function objectAltitude(object, date, observer) {
+  return object.body ? bodyAltitude(object.body, date, observer) : fixedAltitude(object.ra, object.dec, date, observer);
+}
+
+export function sampleObjects(samples, observer, objects = DISPLAY_OBJECTS) {
+  return objects.map(object => ({
+    ...object,
+    samples: samples.map(s => ({ date: s.date, altitude: objectAltitude(object, s.date, observer) }))
+  }));
+}
+
 export function sampleNight(startUtc, endUtc, observer, minutes = 5) {
   const samples = [];
   const stepMs = minutes * 60000;
