@@ -4,7 +4,6 @@ function node(tag,a={}){const n=document.createElementNS(NS,tag);for(const[k,v]o
 function polar(cx,cy,r,a){return[cx+r*Math.sin(a),cy-r*Math.cos(a)]}
 function ringSector(cx,cy,r1,r2,a1,a2,fill){const p1=polar(cx,cy,r2,a1),p2=polar(cx,cy,r2,a2),p3=polar(cx,cy,r1,a2),p4=polar(cx,cy,r1,a1),large=a2-a1>Math.PI?1:0;return node("path",{d:`M ${p1} A ${r2} ${r2} 0 ${large} 1 ${p2} L ${p3} A ${r1} ${r1} 0 ${large} 0 ${p4} Z`,fill})}
 function band(alt){if(alt>=6)return"day";if(alt>=-4)return"golden";if(alt>=-6)return"civil";if(alt>=-12)return"nautical";if(alt>=-18)return"astronomical";return"night"}
-const OBJECT_COLORS=["#ffb347","#7dd3fc","#f9a8d4","#fb7185","#86efac","#c4b5fd","#fcd34d"];
 export function drawClock(svg,samples,selectedDate,isToday,formatTime,wallClockMinutes,objectTracks=[],showMoon=true){
  svg.innerHTML="";const cx=350,cy=350,r0=150,r1=285,rotation=Math.PI;
  const angleFor=date=>rotation+wallClockMinutes(date)/1440*2*Math.PI;
@@ -21,7 +20,7 @@ export function drawClock(svg,samples,selectedDate,isToday,formatTime,wallClockM
    const r=r0+(r1-r0)*Math.min(90,s.altitude)/90,a=angleFor(s.date),p=polar(cx,cy,r,a);
    path+=(drawing?"L":"M")+p[0]+" "+p[1]+" ";drawing=true;
   });
-  if(path){const p=node("path",{d:path,fill:"none",stroke:OBJECT_COLORS[index%OBJECT_COLORS.length],"stroke-width":"2","stroke-linecap":"round",opacity:".9",class:"object-track","data-object":track.key,"data-label":track.name});p._samples=track.samples;svg.appendChild(p)}
+  if(path){const p=node("path",{d:path,fill:"none",stroke:track.color||"#79b8ff","stroke-width":"2","stroke-linecap":"round",opacity:".9",class:"object-track","data-object":track.key,"data-label":track.name});p._samples=track.samples;svg.appendChild(p)}
  });
  const center=node("circle",{cx,cy,r:r0-4,fill:"#0b1019",stroke:"#344258","stroke-width":"1.5"});svg.appendChild(center);
  const title=node("text",{x:cx,y:cy-12,"text-anchor":"middle",fill:"#eef4ff","font-size":"20","font-weight":"600"});title.textContent=selectedDate;svg.appendChild(title);
