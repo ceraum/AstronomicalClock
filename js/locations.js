@@ -21,8 +21,10 @@ export function locationFromUrl(params) {
   const id = params.get("location");
   if (id && LOCATIONS[id]) return { ...LOCATIONS[id] };
 
-  const lat = Number(params.get("lat"));
-  const lon = Number(params.get("lon"));
+  const latParam = params.get("lat");
+  const lonParam = params.get("lon");
+  const lat = latParam === null || latParam === "" ? NaN : Number(latParam);
+  const lon = lonParam === null || lonParam === "" ? NaN : Number(lonParam);
   if (Number.isFinite(lat) && Number.isFinite(lon)) {
     return {
       id: "custom",
