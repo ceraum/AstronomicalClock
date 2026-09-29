@@ -5,6 +5,7 @@ import { drawClock } from "./clock.js";
 const params=new URLSearchParams(location.search);let locationData=locationFromUrl(params),observer=observerFor(locationData);
 const app=document.querySelector("#app");if(params.get("embed")==="1")app.classList.add("embed");
 let selected=params.get("date")||localDateString(new Date(),locationData.timeZone);
+const trackVisibility={moon:params.get("moon")!=="0",planets:params.get("planets")==="1",deepSky:params.get("deepSky")==="1"};
 
 function parts(date,tz){return Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(date).filter(p=>p.type!=="literal").map(p=>[p.type,p.value]))}
 function offsetMs(date,tz){const p=parts(date,tz),asUtc=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second);return asUtc-date.getTime()+date.getMilliseconds()}
@@ -35,21 +36,23 @@ function writeLocationUrl(u){
  else{u.searchParams.delete("location");u.searchParams.set("name",locationData.name||"Custom location");u.searchParams.set("lat",locationData.latitude);u.searchParams.set("lon",locationData.longitude);u.searchParams.set("elevation",locationData.elevation||0);u.searchParams.set("tz",locationData.timeZone||"America/Denver");}
 }
 function render(){
- try{const {start,end}=intervalFor(selected); console.info("AstronomicalClock interval", {startUtc:start.toISOString(),startLocal:formatTime(start),endUtc:end.toISOString(),endLocal:formatTime(end),hours:(end-start)/3600000,zone:locationData.timeZone}); const samples=sampleNight(start,end,observer,5),objectTracks=sampleObjects(samples,observer),mid=new Date(start.getTime()+(end-start)/2),mi=moonInfo(mid);
+ try{const {start,end}=intervalFor(selected); console.info("AstronomicalClock interval", {startUtc:start.toISOString(),startLocal:formatTime(start),endUtc:end.toISOString(),endLocal:formatTime(end),hours:(end-start)/3600000,zone:locationData.timeZone}); const samples=sampleNight(start,end,observer,5),allObjectTracks=sampleObjects(samples,observer),objectTracks=allObjectTracks.filter(t=>t.body?trackVisibility.planets:trackVisibility.deepSky),mid=new Date(start.getTime()+(end-start)/2),mi=moonInfo(mid);
  document.querySelector("#place").textContent=locationData.name;document.querySelector("#coords").textContent=`${Math.abs(locationData.latitude).toFixed(4)}° ${locationData.latitude>=0?"N":"S"}, ${Math.abs(locationData.longitude).toFixed(4)}° ${locationData.longitude>=0?"E":"W"} · ${Math.round(locationData.elevation)} m`;
  document.querySelector("#dateTitle").textContent=formatDate(selected);document.querySelector("#zone").textContent=locationData.timeZone;document.querySelector("#datePicker").value=selected;
- const today=localDateString(new Date(),locationData.timeZone);drawClock(document.querySelector("#clock"),samples,selected,selected===today,formatTime,wallClockMinutes,objectTracks);
+ const today=localDateString(new Date(),locationData.timeZone);drawClock(document.querySelector("#clock"),samples,selected,selected===today,formatTime,wallClockMinutes,objectTracks,trackVisibility.moon);
  const objectColors=["#ffb347","#7dd3fc","#f9a8d4","#fb7185","#86efac","#c4b5fd","#fcd34d"],objectList=document.querySelector("#objectList");objectList.innerHTML="";
- objectTracks.forEach((track,i)=>{const peak=track.samples.reduce((best,s)=>s.altitude>best.altitude?s:best,track.samples[0]),row=document.createElement("div");row.className="object-row";row.innerHTML=`<span class="object-name"><span class="object-dot" style="background:${objectColors[i%objectColors.length]}"></span>${track.name}</span><span class="object-alt">${peak.altitude>0?Math.round(peak.altitude)+"° max":"below horizon"}</span>`;objectList.appendChild(row)});
+ allObjectTracks.forEach((track,i)=>{const peak=track.samples.reduce((best,s)=>s.altitude>best.altitude?s:best,track.samples[0]),row=document.createElement("div");row.className="object-row";row.innerHTML=`<span class="object-name"><span class="object-dot" style="background:${objectColors[i%objectColors.length]}"></span>${track.name}</span><span class="object-alt">${peak.altitude>0?Math.round(peak.altitude)+"° max":"below horizon"}</span>`;objectList.appendChild(row)});
  const ev=document.querySelector("#events");ev.innerHTML="";for(const r of eventRows(start)){const a=document.createElement("div"),b=document.createElement("div");a.className="label";a.textContent=r.label;b.textContent=formatTime(r.date);ev.append(a,b)}
  document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);
  document.querySelector("#error").textContent="";
- const u=new URL(location.href);u.searchParams.set("date",selected);writeLocationUrl(u);history.replaceState(null,"",u);
+ const u=new URL(location.href);u.searchParams.set("date",selected);writeLocationUrl(u);u.searchParams.set("moon",trackVisibility.moon?"1":"0");u.searchParams.set("planets",trackVisibility.planets?"1":"0");u.searchParams.set("deepSky",trackVisibility.deepSky?"1":"0");history.replaceState(null,"",u);
  }catch(e){document.querySelector("#error").textContent="Unable to calculate this date: "+e.message;console.error(e)}
 }
 document.querySelectorAll("[data-days]").forEach(b=>b.addEventListener("click",()=>addDays(Number(b.dataset.days))));
 document.querySelector("#today").addEventListener("click",()=>{selected=localDateString(new Date(),locationData.timeZone);render()});
 document.querySelector("#datePicker").addEventListener("change",e=>{if(e.target.value){selected=e.target.value;render()}});
+function syncTrackToggles(){document.querySelector("#showMoon").checked=trackVisibility.moon;document.querySelector("#showPlanets").checked=trackVisibility.planets;document.querySelector("#showDeepSky").checked=trackVisibility.deepSky}
+["Moon","Planets","DeepSky"].forEach(name=>document.querySelector("#show"+name).addEventListener("change",e=>{trackVisibility[name==="Moon"?"moon":name==="Planets"?"planets":"deepSky"]=e.target.checked;render()}));
 document.querySelector("#jumpBtn").addEventListener("click",()=>{const n=Math.max(-3650,Math.min(3650,Number(document.querySelector("#jump").value)||0));addDays(n)});
 document.querySelector("#locationSelect").addEventListener("change",e=>{
  const id=e.target.value;document.querySelector("#customLocation").classList.toggle("hidden",id!=="custom");
@@ -73,4 +76,4 @@ document.querySelector("#useLocation").addEventListener("click",()=>{
   setLocation({id:"custom",name:"My location",latitude:pos.coords.latitude,longitude:pos.coords.longitude,elevation:Number.isFinite(pos.coords.altitude)?pos.coords.altitude:0,timeZone:locationData.timeZone||"America/Denver"});
  },err=>{status.textContent="Location was not available: "+err.message},{enableHighAccuracy:true,timeout:10000,maximumAge:300000});
 });
-syncLocationControls();render();
+syncLocationControls();syncTrackToggles();render();
