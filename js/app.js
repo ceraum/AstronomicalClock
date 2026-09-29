@@ -22,6 +22,13 @@ function addDays(n){const[y,m,d]=selected.split("-").map(Number),x=new Date(Date
 function phaseName(angle){const a=((angle%360)+360)%360;if(a<22.5||a>=337.5)return"New Moon";if(a<67.5)return"Waxing crescent";if(a<112.5)return"First quarter";if(a<157.5)return"Waxing gibbous";if(a<202.5)return"Full Moon";if(a<247.5)return"Waning gibbous";if(a<292.5)return"Last quarter";return"Waning crescent"}
 function moonGlyph(angle){const a=((angle%360)+360)%360;return a<22.5||a>=337.5?"●":a<67.5?"◔":a<112.5?"◐":a<157.5?"◕":a<202.5?"○":a<247.5?"◕":a<292.5?"◑":"◔"}
 function eventRows(start){return solarEvents(start,observer)}
+function moonNightDetails(samples,rows){
+ const crossings=[];for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i];if((a.moonAlt<0&&b.moonAlt>=0)||(a.moonAlt>=0&&b.moonAlt<0)){const f=(0-a.moonAlt)/(b.moonAlt-a.moonAlt),date=new Date(a.date.getTime()+f*(b.date-a.date));crossings.push({type:b.moonAlt>=0?"rise":"set",date})}}
+ const peak=samples.reduce((best,x)=>x.moonAlt>best.moonAlt?x:best,samples[0]),rise=crossings.find(x=>x.type==="rise")?.date,set=crossings.find(x=>x.type==="set")?.date;
+ const eve=rows.find(x=>x.label==="Evening Astronomical twilight")?.date,morn=rows.find(x=>x.label==="Morning Astronomical twilight")?.date;
+ let observing="";if(eve&&morn){const dark=samples.filter(x=>x.date>=eve&&x.date<=morn),down=dark.filter(x=>x.moonAlt<0);if(!down.length)observing="Moon above horizon throughout astronomical night";else if(down.length===dark.length)observing="Moon below horizon throughout astronomical night";else{let longest=null,begin=null,prev=null;for(const x of dark){if(x.moonAlt<0){if(!begin)begin=x.date;prev=x.date}else if(begin){if(!longest||prev-begin>longest[1]-longest[0])longest=[begin,prev];begin=prev=null}}if(begin&&(!longest||prev-begin>longest[1]-longest[0]))longest=[begin,prev];if(longest){const mins=Math.round((longest[1]-longest[0])/60000),duration=mins>=60?`${Math.floor(mins/60)}h ${mins%60}m`:`${mins}m`;observing=`Moon-free dark sky: ${formatTime(longest[0])} – ${formatTime(longest[1])} · ${duration}`}}}
+ return {rise,set,peak,observing}
+}
 function setLocation(next){locationData={...next};observer=observerFor(locationData);syncLocationControls();render()}
 function syncLocationControls(){
  const select=document.querySelector("#locationSelect"),custom=document.querySelector("#customLocation");
@@ -61,7 +68,7 @@ function render(){
   ["Golden Hour",range(at("Golden / blue boundary"),at("Golden hour (+6°)"))],
   ["Sunrise",fmt(at("Sun center at horizon"))]
  ])
- document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);
+ const md=moonNightDetails(samples,rows);document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);document.querySelector("#moonRise").textContent=md.rise?formatTime(md.rise):"—";document.querySelector("#moonHighest").textContent=md.peak.moonAlt>0?`${formatTime(md.peak.date)} · ${Math.round(md.peak.moonAlt)}°`:"below horizon";document.querySelector("#moonSet").textContent=md.set?formatTime(md.set):"—";document.querySelector("#moonObserving").textContent=md.observing;
  document.querySelector("#error").textContent="";
  const u=new URL(location.href);u.searchParams.set("date",selected);writeLocationUrl(u);u.searchParams.set("moon",trackVisibility.moon?"1":"0");u.searchParams.set("planets",trackVisibility.planets?"1":"0");u.searchParams.set("deepSky",trackVisibility.deepSky?"1":"0");if(soloObject)u.searchParams.set("object",soloObject);else u.searchParams.delete("object");history.replaceState(null,"",u);
  }catch(e){document.querySelector("#error").textContent="Unable to calculate this date: "+e.message;console.error(e)}
