@@ -16,7 +16,8 @@ function formatDate(dateStr){const[y,m,d]=dateStr.split("-").map(Number);return 
 function addDays(n){const[y,m,d]=selected.split("-").map(Number),x=new Date(Date.UTC(y,m-1,d+n));selected=x.toISOString().slice(0,10);render()}
 function phaseName(angle){const a=((angle%360)+360)%360;if(a<22.5||a>=337.5)return"New Moon";if(a<67.5)return"Waxing crescent";if(a<112.5)return"First quarter";if(a<157.5)return"Waxing gibbous";if(a<202.5)return"Full Moon";if(a<247.5)return"Waning gibbous";if(a<292.5)return"Last quarter";return"Waning crescent"}
 function moonGlyph(angle){const a=((angle%360)+360)%360;return a<22.5||a>=337.5?"●":a<67.5?"◔":a<112.5?"◐":a<157.5?"◕":a<202.5?"○":a<247.5?"◕":a<292.5?"◑":"◔"}
-function eventRows(start){return solarEvents(start,observer)}\nfunction render(){
+function eventRows(start){return solarEvents(start,observer)}
+function render(){
  try{const start=startFor(selected); console.info("AstronomicalClock start", {utc:start.toISOString(), local:formatTime(start), zone:locationData.timeZone}); const samples=sampleNight(start,observer,5),mid=new Date(start.getTime()+12*3600000),mi=moonInfo(mid);
  document.querySelector("#place").textContent=locationData.name;document.querySelector("#coords").textContent=`${Math.abs(locationData.latitude).toFixed(4)}° ${locationData.latitude>=0?"N":"S"}, ${Math.abs(locationData.longitude).toFixed(4)}° ${locationData.longitude>=0?"E":"W"} · ${Math.round(locationData.elevation)} m`;
  document.querySelector("#dateTitle").textContent=formatDate(selected);document.querySelector("#zone").textContent=locationData.timeZone;document.querySelector("#datePicker").value=selected;
