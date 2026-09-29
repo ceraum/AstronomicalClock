@@ -13,9 +13,16 @@ export function observerFor(location) {
   return new Astronomy.Observer(location.latitude, location.longitude, location.elevation || 0);
 }
 
+function normalizedHorizontal(h) {
+  return {
+    altitude: Number.isFinite(h.altitude) ? h.altitude : h.lat,
+    azimuth: Number.isFinite(h.azimuth) ? h.azimuth : h.lon
+  };
+}
+
 export function bodyHorizontal(body, date, observer) {
   const eq = Astronomy.Equator(body, date, observer, true, true);
-  return Astronomy.Horizon(date, observer, eq.ra, eq.dec, "normal");
+  return normalizedHorizontal(Astronomy.Horizon(date, observer, eq.ra, eq.dec, "normal"));
 }
 
 export function bodyAltitude(body, date, observer) {
@@ -50,7 +57,7 @@ export const DISPLAY_OBJECTS = [
 ];
 
 function fixedHorizontal(ra, dec, date, observer) {
-  return Astronomy.Horizon(date, observer, ra, dec, "normal");
+  return normalizedHorizontal(Astronomy.Horizon(date, observer, ra, dec, "normal"));
 }
 
 export function objectHorizontal(object, date, observer) {
