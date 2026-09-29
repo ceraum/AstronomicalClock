@@ -35,16 +35,22 @@ export function moonInfo(date) {
   };
 }
 
-export function sampleNight(startUtc, observer, minutes = 5) {
+export function sampleNight(startUtc, endUtc, observer, minutes = 5) {
   const samples = [];
-  for (let m = 0; m <= 24 * 60; m += minutes) {
-    const date = new Date(startUtc.getTime() + m * 60000);
+  const stepMs = minutes * 60000;
+  for (let t = startUtc.getTime(); t < endUtc.getTime(); t += stepMs) {
+    const date = new Date(t);
     samples.push({
       date,
       sunAlt: sunAltitude(date, observer),
       moonAlt: moonAltitude(date, observer)
     });
   }
+  samples.push({
+    date: new Date(endUtc),
+    sunAlt: sunAltitude(endUtc, observer),
+    moonAlt: moonAltitude(endUtc, observer)
+  });
   return samples;
 }
 
