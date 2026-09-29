@@ -43,14 +43,24 @@ function render(){
  const today=localDateString(new Date(),locationData.timeZone);drawClock(document.querySelector("#clock"),samples,selected,selected===today,formatTime,wallClockMinutes,objectTracks,trackVisibility.moon);
  const objectColors=["#ffb347","#7dd3fc","#f9a8d4","#fb7185","#86efac","#c4b5fd","#fcd34d"],objectList=document.querySelector("#objectList");objectList.innerHTML="";
  allObjectTracks.forEach((track,i)=>{const peak=track.samples.reduce((best,s)=>s.altitude>best.altitude?s:best,track.samples[0]),row=document.createElement("div"),visible=track.body?trackVisibility.planets:trackVisibility.deepSky;row.className="object-row"+(visible?"":" object-muted");row.innerHTML=`<span class="object-name"><span class="object-dot" style="background:${objectColors[i%objectColors.length]}"></span>${track.name}</span><span class="object-alt">${peak.altitude>0?Math.round(peak.altitude)+"° max":"below horizon"}</span>`;row.title="Click to show only this object";row.addEventListener("click",()=>{soloObject=soloObject===track.key?null:track.key;render()});objectList.appendChild(row)});
- const ev=document.querySelector("#events");ev.innerHTML="";const rows=eventRows(start),evening=rows.filter(x=>x.label.startsWith("Evening ")),at=label=>evening.find(x=>x.label==="Evening "+label)?.date,fmt=d=>d?formatTime(d):"—",range=(a,b)=>a&&b?`${formatTime(a)} – ${formatTime(b)}`:"—",solarRows=[
+ const ev=document.querySelector("#events");ev.innerHTML="";const rows=eventRows(start),fmt=d=>d?formatTime(d):"—",range=(a,b)=>a&&b?`${formatTime(a)} – ${formatTime(b)}`:"—";
+ const solarBlock=(period,items)=>{const events=rows.filter(x=>x.label.startsWith(period+" ")),at=label=>events.find(x=>x.label===period+" "+label)?.date,group=document.createElement("section"),heading=document.createElement("div"),grid=document.createElement("div");group.className="solar-block";heading.className="event-heading";heading.textContent=period;grid.className="solar-grid";for(const [label,value] of items(at)){const a=document.createElement("div"),b=document.createElement("div");a.className="label";a.textContent=label;b.textContent=value;grid.append(a,b)}group.append(heading,grid);ev.appendChild(group)};
+ solarBlock("Evening",at=>[
   ["Sunset",fmt(at("Sun center at horizon"))],
   ["Golden Hour",range(at("Golden hour (+6°)"),at("Golden / blue boundary"))],
   ["Blue Hour",range(at("Golden / blue boundary"),at("Blue-hour boundary"))],
   ["Civil Twilight",range(at("Sun center at horizon"),at("Civil twilight"))],
   ["Nautical Twilight",range(at("Civil twilight"),at("Nautical twilight"))],
   ["Astronomical Twilight",range(at("Nautical twilight"),at("Astronomical twilight"))]
- ];for(const [label,value] of solarRows){const a=document.createElement("div"),b=document.createElement("div");a.className="label";a.textContent=label;b.textContent=value;ev.append(a,b)}
+ ]);
+ solarBlock("Morning",at=>[
+  ["Astronomical Twilight",range(at("Astronomical twilight"),at("Nautical twilight"))],
+  ["Nautical Twilight",range(at("Nautical twilight"),at("Civil twilight"))],
+  ["Civil Twilight",range(at("Civil twilight"),at("Sun center at horizon"))],
+  ["Blue Hour",range(at("Blue-hour boundary"),at("Golden / blue boundary"))],
+  ["Golden Hour",range(at("Golden / blue boundary"),at("Golden hour (+6°)"))],
+  ["Sunrise",fmt(at("Sun center at horizon"))]
+ ])
  document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);
  document.querySelector("#error").textContent="";
  const u=new URL(location.href);u.searchParams.set("date",selected);writeLocationUrl(u);u.searchParams.set("moon",trackVisibility.moon?"1":"0");u.searchParams.set("planets",trackVisibility.planets?"1":"0");u.searchParams.set("deepSky",trackVisibility.deepSky?"1":"0");if(soloObject)u.searchParams.set("object",soloObject);else u.searchParams.delete("object");history.replaceState(null,"",u);
