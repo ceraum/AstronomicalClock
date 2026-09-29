@@ -13,7 +13,7 @@ export function drawClock(svg,samples,selectedDate,isToday,formatTime,wallClockM
  for(let i=0;i<samples.length-1;i++){const alt=(samples[i].sunAlt+samples[i+1].sunAlt)/2;if(alt>=-8&&alt<-4){const a1=angleFor(samples[i].date);let a2=angleFor(samples[i+1].date);if(a2<a1-1)a2+=2*Math.PI;svg.appendChild(ringSector(cx,cy,r1-18,r1,a1,a2,COLORS.blue))}}
  [0,30,60,90].forEach(alt=>{const r=r0+(r1-r0)*alt/90;svg.appendChild(node("circle",{cx,cy,r,fill:"none",stroke:"#65738a","stroke-width":".8",opacity:".5"}))});
  for(let h=0;h<24;h++){const a=rotation+h/24*2*Math.PI,p1=polar(cx,cy,r0,a),p2=polar(cx,cy,r1+(h%3===0?8:3),a);svg.appendChild(node("line",{x1:p1[0],y1:p1[1],x2:p2[0],y2:p2[1],stroke:"#8090a8","stroke-width":h%3===0?1.2:.6,opacity:h%3===0?.7:.35}));if(h%3===0){const p=polar(cx,cy,r1+28,a),t=node("text",{x:p[0],y:p[1]+5,"text-anchor":"middle",fill:"#aebbd0","font-size":"13"});t.textContent=h===0?"NOON":h===12?"MIDNIGHT":((12+h)%24||24);svg.appendChild(t)}}
- if(showMoon){let d="";samples.forEach((s,i)=>{const alt=Math.max(0,s.moonAlt),r=r0+(r1-r0)*alt/90,a=angleFor(s.date),p=polar(cx,cy,r,a);d+=(i?"L":"M")+p[0]+" "+p[1]+" "});svg.appendChild(node("path",{d,fill:"none",stroke:COLORS.moon,"stroke-width":"3","stroke-linecap":"round",opacity:".95"}));}
+ if(showMoon){let d="",drawing=false;samples.forEach(s=>{if(s.moonAlt<0){drawing=false;return}const r=r0+(r1-r0)*Math.min(90,s.moonAlt)/90,a=angleFor(s.date),p=polar(cx,cy,r,a);d+=(drawing?"L":"M")+p[0]+" "+p[1]+" ";drawing=true});if(d){const moon=node("path",{d,fill:"none",stroke:COLORS.moon,"stroke-width":"3","stroke-linecap":"round",opacity:".95",class:"object-track","data-label":"Moon"});const tip=node("title");tip.textContent="Moon";moon.appendChild(tip);svg.appendChild(moon)}}
  objectTracks.forEach((track,index)=>{
   let path="",drawing=false;
   track.samples.forEach(s=>{
@@ -21,7 +21,7 @@ export function drawClock(svg,samples,selectedDate,isToday,formatTime,wallClockM
    const r=r0+(r1-r0)*Math.min(90,s.altitude)/90,a=angleFor(s.date),p=polar(cx,cy,r,a);
    path+=(drawing?"L":"M")+p[0]+" "+p[1]+" ";drawing=true;
   });
-  if(path)svg.appendChild(node("path",{d:path,fill:"none",stroke:OBJECT_COLORS[index%OBJECT_COLORS.length],"stroke-width":"2","stroke-linecap":"round",opacity:".9","data-object":track.key}));
+  if(path){const p=node("path",{d:path,fill:"none",stroke:OBJECT_COLORS[index%OBJECT_COLORS.length],"stroke-width":"2","stroke-linecap":"round",opacity:".9",class:"object-track","data-object":track.key,"data-label":track.name});const tip=node("title");tip.textContent=track.name;p.appendChild(tip);svg.appendChild(p)}
  });
  const center=node("circle",{cx,cy,r:r0-4,fill:"#0b1019",stroke:"#344258","stroke-width":"1.5"});svg.appendChild(center);
  const title=node("text",{x:cx,y:cy-12,"text-anchor":"middle",fill:"#eef4ff","font-size":"20","font-weight":"600"});title.textContent=selectedDate;svg.appendChild(title);
