@@ -63,3 +63,25 @@ export function crossings(samples, level) {
   }
   return found;
 }
+
+
+export function solarEvents(startUtc, observer) {
+  const events = [];
+  const addAltitude = (altitude, label) => {
+    for (const direction of [-1, +1]) {
+      const t = Astronomy.SearchAltitude(Astronomy.Body.Sun, observer, direction, startUtc, 1.05, altitude);
+      if (t) events.push({ date: t.date, label: (direction < 0 ? "Evening " : "Morning ") + label });
+    }
+  };
+  addAltitude(6, "Golden hour (+6°)");
+  // For the 0° center crossing, retain the visual boundary definition used by the clock.
+  addAltitude(0, "Sun center at horizon");
+  addAltitude(-4, "Golden / blue boundary");
+  addAltitude(-6, "Civil twilight");
+  addAltitude(-8, "Blue-hour boundary");
+  addAltitude(-12, "Nautical twilight");
+  addAltitude(-18, "Astronomical twilight");
+  return events
+    .filter(e => e.date >= startUtc && e.date <= new Date(startUtc.getTime() + 25 * 3600000))
+    .sort((x, y) => x.date - y.date);
+}
