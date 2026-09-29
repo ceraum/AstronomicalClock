@@ -10,7 +10,9 @@ function parts(date,tz){return Object.fromEntries(new Intl.DateTimeFormat("en-US
 function offsetMs(date,tz){const p=parts(date,tz),asUtc=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second);return asUtc-date.getTime()+date.getMilliseconds()}
 function zonedDate(y,m,d,h,tz){let guess=new Date(Date.UTC(y,m-1,d,h));for(let i=0;i<3;i++)guess=new Date(Date.UTC(y,m-1,d,h)-offsetMs(guess,tz));return guess}
 function localDateString(date,tz){const p=parts(date,tz);return `${p.year}-${p.month}-${p.day}`}
-function startFor(dateStr){const[y,m,d]=dateStr.split("-").map(Number);return zonedDate(y,m,d,12,locationData.timeZone)}
+function noonFor(dateStr){const[y,m,d]=dateStr.split("-").map(Number);return zonedDate(y,m,d,12,locationData.timeZone)}
+function nextDateString(dateStr){const[y,m,d]=dateStr.split("-").map(Number),x=new Date(Date.UTC(y,m-1,d+1));return x.toISOString().slice(0,10)}
+function intervalFor(dateStr){return {start:noonFor(dateStr),end:noonFor(nextDateString(dateStr))}}
 function formatTime(d){return new Intl.DateTimeFormat("en-US",{timeZone:locationData.timeZone,hour:"numeric",minute:"2-digit",timeZoneName:"short"}).format(d)}
 function formatDate(dateStr){const[y,m,d]=dateStr.split("-").map(Number);return new Intl.DateTimeFormat("en-US",{dateStyle:"full",timeZone:"UTC"}).format(new Date(Date.UTC(y,m-1,d)))}
 function addDays(n){const[y,m,d]=selected.split("-").map(Number),x=new Date(Date.UTC(y,m-1,d+n));selected=x.toISOString().slice(0,10);render()}
@@ -18,14 +20,14 @@ function phaseName(angle){const a=((angle%360)+360)%360;if(a<22.5||a>=337.5)retu
 function moonGlyph(angle){const a=((angle%360)+360)%360;return a<22.5||a>=337.5?"●":a<67.5?"◔":a<112.5?"◐":a<157.5?"◕":a<202.5?"○":a<247.5?"◕":a<292.5?"◑":"◔"}
 function eventRows(start){return solarEvents(start,observer)}
 function render(){
- try{const start=startFor(selected); console.info("AstronomicalClock start", {utc:start.toISOString(), local:formatTime(start), zone:locationData.timeZone}); const samples=sampleNight(start,observer,5),mid=new Date(start.getTime()+12*3600000),mi=moonInfo(mid);
+ try{const {start,end}=intervalFor(selected); console.info("AstronomicalClock interval", {startUtc:start.toISOString(),startLocal:formatTime(start),endUtc:end.toISOString(),endLocal:formatTime(end),hours:(end-start)/3600000,zone:locationData.timeZone}); const samples=sampleNight(start,end,observer,5),mid=new Date(start.getTime()+(end-start)/2),mi=moonInfo(mid);
  document.querySelector("#place").textContent=locationData.name;document.querySelector("#coords").textContent=`${Math.abs(locationData.latitude).toFixed(4)}° ${locationData.latitude>=0?"N":"S"}, ${Math.abs(locationData.longitude).toFixed(4)}° ${locationData.longitude>=0?"E":"W"} · ${Math.round(locationData.elevation)} m`;
  document.querySelector("#dateTitle").textContent=formatDate(selected);document.querySelector("#zone").textContent=locationData.timeZone;document.querySelector("#datePicker").value=selected;
  const today=localDateString(new Date(),locationData.timeZone);drawClock(document.querySelector("#clock"),samples,selected,selected===today,formatTime);
  const ev=document.querySelector("#events");ev.innerHTML="";for(const r of eventRows(start)){const a=document.createElement("div"),b=document.createElement("div");a.className="label";a.textContent=r.label;b.textContent=formatTime(r.date);ev.append(a,b)}
  document.querySelector("#moonIllum").textContent=`${Math.round(mi.fraction*100)}% illuminated`;document.querySelector("#moonPhase").textContent=phaseName(mi.phase);document.querySelector("#moonSymbol").textContent=moonGlyph(mi.phase);
  const firstEvent=eventRows(start)[0];
- document.querySelector("#error").textContent=`DEBUG — noon anchor: ${formatTime(start)} / ${start.toISOString()} · Sun altitude at anchor: ${samples[0].sunAlt.toFixed(1)}° · first event UTC: ${firstEvent?firstEvent.date.toISOString():"none"}`;
+ document.querySelector("#error").textContent=`DEBUG — ${formatTime(start)} → ${formatTime(end)} · elapsed ${((end-start)/3600000).toFixed(0)}h · Sun altitude at start: ${samples[0].sunAlt.toFixed(1)}° · first event UTC: ${firstEvent?firstEvent.date.toISOString():"none"}`;
  const u=new URL(location.href);u.searchParams.set("date",selected);history.replaceState(null,"",u);
  }catch(e){document.querySelector("#error").textContent="Unable to calculate this date: "+e.message;console.error(e)}
 }
