@@ -13,9 +13,13 @@ export function observerFor(location) {
   return new Astronomy.Observer(location.latitude, location.longitude, location.elevation || 0);
 }
 
-export function bodyAltitude(body, date, observer) {
+export function bodyHorizontal(body, date, observer) {
   const eq = Astronomy.Equator(body, date, observer, true, true);
-  return Astronomy.Horizon(date, observer, eq.ra, eq.dec, "normal").altitude;
+  return Astronomy.Horizon(date, observer, eq.ra, eq.dec, "normal");
+}
+
+export function bodyAltitude(body, date, observer) {
+  return bodyHorizontal(body, date, observer).altitude;
 }
 
 export function sunAltitude(date, observer) {
@@ -45,18 +49,22 @@ export const DISPLAY_OBJECTS = [
   { key: "m31", name: "Andromeda Galaxy (M31)", ra: 0.7123, dec: 41.2692 }
 ];
 
-function fixedAltitude(ra, dec, date, observer) {
-  return Astronomy.Horizon(date, observer, ra, dec, "normal").altitude;
+function fixedHorizontal(ra, dec, date, observer) {
+  return Astronomy.Horizon(date, observer, ra, dec, "normal");
+}
+
+export function objectHorizontal(object, date, observer) {
+  return object.body ? bodyHorizontal(object.body, date, observer) : fixedHorizontal(object.ra, object.dec, date, observer);
 }
 
 export function objectAltitude(object, date, observer) {
-  return object.body ? bodyAltitude(object.body, date, observer) : fixedAltitude(object.ra, object.dec, date, observer);
+  return objectHorizontal(object, date, observer).altitude;
 }
 
 export function sampleObjects(samples, observer, objects = DISPLAY_OBJECTS) {
   return objects.map(object => ({
     ...object,
-    samples: samples.map(s => ({ date: s.date, altitude: objectAltitude(object, s.date, observer) }))
+    samples: samples.map(s => { const h=objectHorizontal(object,s.date,observer); return { date:s.date, altitude:h.altitude, azimuth:h.azimuth } })
   }));
 }
 
@@ -68,13 +76,15 @@ export function sampleNight(startUtc, endUtc, observer, minutes = 5) {
     samples.push({
       date,
       sunAlt: sunAltitude(date, observer),
-      moonAlt: moonAltitude(date, observer)
+      moonAlt: moonAltitude(date, observer),
+      moonAz: bodyHorizontal(Astronomy.Body.Moon, date, observer).azimuth
     });
   }
   samples.push({
     date: new Date(endUtc),
     sunAlt: sunAltitude(endUtc, observer),
-    moonAlt: moonAltitude(endUtc, observer)
+    moonAlt: moonAltitude(endUtc, observer),
+    moonAz: bodyHorizontal(Astronomy.Body.Moon, endUtc, observer).azimuth
   });
   return samples;
 }
