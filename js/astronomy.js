@@ -47,13 +47,13 @@ export function moonInfo(date) {
 }
 
 export const DISPLAY_OBJECTS = [
-  { key: "jupiter", name: "Jupiter", body: Astronomy.Body.Jupiter },
-  { key: "saturn", name: "Saturn", body: Astronomy.Body.Saturn },
-  { key: "venus", name: "Venus", body: Astronomy.Body.Venus },
-  { key: "mars", name: "Mars", body: Astronomy.Body.Mars },
-  { key: "m42", name: "Orion Nebula (M42)", ra: 5.5881, dec: -5.3911 },
-  { key: "m45", name: "Pleiades (M45)", ra: 3.7903, dec: 24.1167 },
-  { key: "m31", name: "Andromeda Galaxy (M31)", ra: 0.7123, dec: 41.2692 }
+  { key: "jupiter", name: "Jupiter", body: Astronomy.Body.Jupiter, color: "#ffb347" },
+  { key: "saturn", name: "Saturn", body: Astronomy.Body.Saturn, color: "#7dd3fc" },
+  { key: "venus", name: "Venus", body: Astronomy.Body.Venus, color: "#f9a8d4" },
+  { key: "mars", name: "Mars", body: Astronomy.Body.Mars, color: "#fb7185" },
+  { key: "m42", name: "Orion Nebula (M42)", ra: 5.5881, dec: -5.3911, color: "#86efac" },
+  { key: "m45", name: "Pleiades (M45)", ra: 3.7903, dec: 24.1167, color: "#c4b5fd" },
+  { key: "m31", name: "Andromeda Galaxy (M31)", ra: 0.7123, dec: 41.2692, color: "#fcd34d" }
 ];
 
 function fixedHorizontal(ra, dec, date, observer) {
