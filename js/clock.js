@@ -7,7 +7,7 @@ function band(alt){if(alt>=6)return"day";if(alt>=-4)return"golden";if(alt>=-6)re
 export function drawClock(svg,samples,selectedDate,isToday,formatTime,wallClockMinutes){
  svg.innerHTML="";const cx=350,cy=350,r0=150,r1=285,rotation=Math.PI;
  const angleFor=date=>rotation+wallClockMinutes(date)/1440*2*Math.PI;
- for(let i=0;i<samples.length-1;i++){const a1=angleFor(samples[i].date),a2=angleFor(samples[i+1].date);if(a2<a1-1)a2+=2*Math.PI;svg.appendChild(ringSector(cx,cy,r0,r1,a1,a2,COLORS[band((samples[i].sunAlt+samples[i+1].sunAlt)/2)]))}
+ for(let i=0;i<samples.length-1;i++){const a1=angleFor(samples[i].date);let a2=angleFor(samples[i+1].date);if(a2<a1-1)a2+=2*Math.PI;svg.appendChild(ringSector(cx,cy,r0,r1,a1,a2,COLORS[band((samples[i].sunAlt+samples[i+1].sunAlt)/2)]))}
  // blue hour overlay
  for(let i=0;i<samples.length-1;i++){const alt=(samples[i].sunAlt+samples[i+1].sunAlt)/2;if(alt>=-8&&alt<-4){const a1=angleFor(samples[i].date);let a2=angleFor(samples[i+1].date);if(a2<a1-1)a2+=2*Math.PI;svg.appendChild(ringSector(cx,cy,r1-18,r1,a1,a2,COLORS.blue))}}
  [0,30,60,90].forEach(alt=>{const r=r0+(r1-r0)*alt/90;svg.appendChild(node("circle",{cx,cy,r,fill:"none",stroke:"#65738a","stroke-width":".8",opacity:".5"}))});
